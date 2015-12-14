@@ -1,0 +1,25 @@
+classdef UAV
+    %UAV Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    properties (SetAccess = public, GetAccess = public)
+        x; %x coordinate
+        y; %y coordinate
+        ang; %angle (with regards to Ox)
+        speed;
+        
+    end
+    
+    methods
+        function uav = UAV()
+            x = 0;
+            y = 0;
+            ang = 0;
+            speed = 10;
+        end
+        
+        function change = change_angle(ang_diff)
+    end
+    
+end
+
