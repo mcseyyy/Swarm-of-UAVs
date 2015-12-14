@@ -1,4 +1,5 @@
 classdef UAVsim < handle
+    
     properties (SetAccess = public, GetAccess = public)
         x; %x coordinate
         y; %y coordinate
@@ -8,6 +9,8 @@ classdef UAVsim < handle
         speed;
         state=1; %1-SEARCH 2-IN_CLOUD 3-OUT_CLOUD
         d_ang = pi/20;
+        p = 0;
+        clockwise = -1;
         
     end
     
@@ -37,26 +40,45 @@ classdef UAVsim < handle
         
         function step(uav,dt,p)
             %1-SEARCH;      go in spirals
-            %2-IN_CLOUD;    keep going straight until you get too close to
-            %               the middle
-            %4-OUT_CLOUD;   spin in circles until you get back in
-            if (uav.state==1 && p<0.4)
-                uav.ang = uav.ang + uav.d_ang;
-                uav.d_ang = uav.d_ang*0.99;    
-            elseif (uav.state == 1 && p>=0.4) %got to a cloud;
-                uav.state = 2;
-            elseif (uav.state == 2 && p>0.8)  %too close to center
-                uav.d_ang = -pi/3;
-                uav.state = 1;
-            elseif (uav.state == 2 && p<0.4)  %too far from center
-                uav.state=1;
-                uav.d_ang = -pi/3;
+            %2-SEARCH_LR;
+            %3-FOLOW edge (hopefully)
+            %4-
+            if (uav.state==1)
+                if p>0.3
+                    uav.d_ang = pi/20;
+                end
+                if p<0.41 %still looking for a cloud
+                    fprintf('here\n');
+                    uav.ang = uav.ang + uav.d_ang;
+                    uav.d_ang = uav.d_ang*0.99;    
+                else %got to a cloud;
+                    fprintf('there\n');
+                    uav.state = 2; %search_lr
+                    uav.d_ang = pi/5;
+                    uav.ang = uav.ang+uav.d_ang;
+                end
+            elseif (uav.state == 2)
+                if (uav.p>p)
+                    uav.clockwise = -1;
+                else
+                    uav.clockwise = 1;
+                end
+                uav.state = 3;
+            elseif (uav.state == 3)
+                if p<0.3
+                    uav.state=1;
+                    uav.d_ang = pi/20;
+                elseif p<uav.p
+                    uav.ang = uav.ang-pi/4*uav.clockwise;
+                else
+                    uav.ang = uav.ang+pi/4*uav.clockwise;
+                end
             end
-            if uav.ang>2*pi
-                uav.ang = uav.ang-2*pi;
-            end
+               
+            
             uav.x = uav.x + uav.speed * sin(uav.ang) * dt;
             uav.y = uav.y + uav.speed * cos(uav.ang) * dt;
+            uav.p = p;
             fprintf('state=%d speed=%d ang=%f\n',uav.state,uav.speed,uav.ang);
         end
     end
