@@ -20,17 +20,17 @@ hold on % so each plot doesn't wipte the predecessor
 
 
 
-uav = UAVsim();
+uav = UAVsim(0,0,0);
 % main simulation loop
 for kk=1:1000
     t = t + dt;
-    p = cloudsamp(cloud,uav.x,uav.y,t);
-    uav.step(dt,p);
+    
+    uav.step(dt,t,cloud);
     
     cla
     
     %plot stuff
-    title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav.x,uav.y,p))
+    title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav.x,uav.y,uav.p))
     plot(uav.x,uav.y,'o')
     cloudplot(cloud,t)
     

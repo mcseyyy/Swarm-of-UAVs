@@ -8,6 +8,7 @@ function sim_start
 % load cloud data
 % choose a scenario
 % load 'cloud1.mat'
+close all;
 load 'cloud2.mat'
 
 % time and time step
@@ -20,19 +21,21 @@ hold on % so each plot doesn't wipte the predecessor
 
 
 
-uav = UAVsim();
+uav = UAVsim(0,0,0);
+
 % main simulation loop
-for kk=1:1000
+for kk=1:3600
     t = t + dt;
-    p = cloudsamp(cloud,uav.x,uav.y,t);
-    uav.step(dt,p);
     
-    cla
+    uav.step(dt,t,cloud);
+    
+    
     
     %plot stuff
-    title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav.x,uav.y,p))
+    cla
+    title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav.x,uav.y,uav.p))
     plot(uav.x,uav.y,'o')
     cloudplot(cloud,t)
-    pause(0.001);
+    
     
 end
