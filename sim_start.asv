@@ -33,6 +33,6 @@ for kk=1:1000
     title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav.x,uav.y,p))
     plot(uav.x,uav.y,'o')
     cloudplot(cloud,t)
-    pause(0.001);
+    
     
 end
