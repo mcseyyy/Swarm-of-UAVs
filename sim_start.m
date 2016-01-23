@@ -33,8 +33,8 @@ for kk=1:3600
     
     %plot stuff
     cla
-    title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav.x,uav.y,uav.p))
-    plot(uav.x,uav.y,'o')
+    title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav.get_real_x,uav.get_real_y,uav.p))
+    plot(uav.get_real_x(),uav.get_real_y(),'o')
     cloudplot(cloud,t)
     
     
