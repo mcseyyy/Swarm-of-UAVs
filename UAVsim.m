@@ -58,21 +58,10 @@ classdef UAVsim < handle
     
         function step(uav,dt,t,cloud)
             p = cloudsamp(cloud,uav.x,uav.y,t);
-            ang_change = uav_fsm(uav,p); 
+            ang_change = uav_fsm(uav,p,dt); 
             
             ang_change = ang_change/uav.speed;
-            
-            x = [uav.x;uav.y; uav.ang];
-            u = [uav.speed; ang_change];
-            
-            k1 = f_continuous(x,u);
-            k2 = f_continuous(x+k1*dt/2,u);
-            k3 = f_continuous(x+k2*dt/2,u);
-            k4 = f_continuous(x+k3*dt,u);
-            xnew = x +(k1 + 2*k2 + 2*k3 + k4)*dt/6;
-            uav.x = xnew(1);
-            uav.y = xnew(2);
-            uav.ang = xnew(3);
+            [uav.x,uav.y,uav.ang] = update_location(uav.x, uav.y, uav.ang, uav.speed, ang_change,dt);
             uav.p = p;
         end
     end

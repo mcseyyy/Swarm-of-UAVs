@@ -27,6 +27,9 @@ uav = UAVsim(0,0,0);
 for kk=1:3600
     t = t + dt;
     
+    
+    
+    
     uav.step(dt,t,cloud);
     
     

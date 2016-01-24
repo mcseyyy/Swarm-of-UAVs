@@ -1,4 +1,4 @@
-function ang_change = uav_fsm(uav,p)
+function ang_change = uav_fsm(uav,p,dt)
     ang_change = 0;
     uav.curr_x_est = uav.get_x();
     uav.curr_y_est = uav.get_y();
@@ -35,7 +35,14 @@ function ang_change = uav_fsm(uav,p)
     if ang_change == 0
         uav.ang_est = atan2(uav.curr_y_est - uav.prev_y_est, uav.curr_x_est-uav.prev_x_est);
     else
-        uav.ang_est = uav.ang_est + ang_change;
+        % check if the movement would make the uav to get outside the map;
+        % if this is the case, turn to the right as much as possible;
+        
+        %also, update the angle estimate
+        [est_x,est_y,new_ang_est] = update_location(uav.curr_x_est, uav.curr_y_est, uav.ang_est, uav.speed, ang_change/uav.speed,dt);
+        
+        
+        
     end;
     
     
