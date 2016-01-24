@@ -16,6 +16,7 @@ function sim_start
 
     
     uav = UAVsim(0,0,0,0,0); %x,y,ang,t,id
+    
 
     % main simulation loop
     for kk=1:3600

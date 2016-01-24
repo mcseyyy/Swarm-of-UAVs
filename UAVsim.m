@@ -43,8 +43,8 @@ classdef UAVsim < handle
                 uav.y = y;
                 uav.t_start = t;     
                 uav.id = id;
-                uav.x_target = 850;
-                uav.y_target = -800;
+                uav.x_target = -850;
+                uav.y_target = 800;
             end            
         end
         
