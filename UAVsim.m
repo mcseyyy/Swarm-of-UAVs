@@ -1,18 +1,23 @@
 classdef UAVsim < handle
     properties (SetAccess = public, GetAccess = public)
-        ang_thresh;
-        dist_thresh;
+        %ang_thresh;
+        %dist_thresh;
+        id;
         speed=20;
-        state=1; %1-SEARCH 2-IN_CLOUD 3-OUT_CLOUD
+        state=0; % 0-Estimate_Angle 1-SEARCH 2-IN_CLOUD 3-OUT_CLOUD
         p=0;
         curr_x_est;
         curr_y_est;
         prev_x_est;
         prev_y_est;
-        ang_est=-1;
+        ang_est=0;
         t_start;
+        round_no = 0;
         spiral_change = pi/15; %the total change in angle per timestep
-        ang_estimate = 0;
+        x_target;
+        y_target;
+        %ang_estimate = 0;
+        
     end
     properties (GetAccess = private)
         x=0;
@@ -32,11 +37,14 @@ classdef UAVsim < handle
     end
     
     methods
-        function uav = UAVsim(x,y,t)
+        function uav = UAVsim(x,y,ang,t,id)
             if (nargin>2)
                 uav.x = x;
                 uav.y = y;
-                uav.t_start = t;                    
+                uav.t_start = t;     
+                uav.id = id;
+                uav.x_target = 850;
+                uav.y_target = -800;
             end            
         end
         
@@ -58,11 +66,14 @@ classdef UAVsim < handle
     
         function step(uav,dt,t,cloud)
             p = cloudsamp(cloud,uav.x,uav.y,t);
-            ang_change = uav_fsm(uav,p,dt); 
+            total_ang_change = uav_fsm(uav,p,dt); 
+            turn_speed = total_ang_change/uav.speed;
+            [uav.x,uav.y,uav.ang] = update_location(uav.x, uav.y, uav.ang, uav.speed, turn_speed,dt);
+            uav.ang = mod(uav.ang+2*pi,2*pi);
             
-            ang_change = ang_change/uav.speed;
-            [uav.x,uav.y,uav.ang] = update_location(uav.x, uav.y, uav.ang, uav.speed, ang_change,dt);
+            fprintf('================ state=%d %f %f %f\n', uav.state,uav.ang/pi*180, uav.ang_est/pi*180, uav.ang-uav.ang_est);
             uav.p = p;
+            
         end
     end
     
