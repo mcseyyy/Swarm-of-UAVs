@@ -3,11 +3,12 @@ function sim_start
     % choose a scenario
     % load 'cloud1.mat'
     close all;
-    load 'cloud1.mat'
+    load 'cloud2.mat'
 
     % time and time step
     t = 0;
     dt = 1;
+    last_launch = 1;
 
     % open new figure window
     figure
@@ -34,7 +35,7 @@ function sim_start
         t = t + dt;
         i=1;
         spawn_new_uav = false;
-        fprintf('num_uavs %d\n',num_uavs);
+        
         while i<=num_uavs
             
             [x,y,p,id,new_uav] = uav(floor(i)).step(dt,t,cloud,old_msg);
@@ -44,15 +45,6 @@ function sim_start
             end
             if uav(i).state == 5 
                 uav(i)=[];
-                %if uav returned to the base, remove it
-                
-                %if i<num_uavs && i>1
-                %    uav = [uav(1:i-1);uav(i+1:end)];
-                %elseif i<1
-                %   uav = uav(2:end);
-                %else
-                %    uav = uav(1:end-1);
-                %end
                     
                 i=i-1;
                 num_uavs = num_uavs-1;
@@ -69,18 +61,23 @@ function sim_start
         title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav(1).get_real_x,uav(1).get_real_y,uav(1).p))
         %plot(uav.get_real_x(),uav.get_real_y(),'o')
         for i=1:num_uavs
-            if (uav(i).speed == 10)
-                plot(uav(i).get_real_x(),uav(i).get_real_y(),'x')
-            elseif (uav(i).speed ==20)
-                plot(uav(i).get_real_x(),uav(i).get_real_y(),'+')
-            else
-                plot(uav(i).get_real_x(),uav(i).get_real_y(),'o')
-            %plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),30);
-            end
+            text(uav(i).get_real_x()-14, uav(i).get_real_y()-5,sprintf('%d',uav(i).id));
+            plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),25);
+            
+            
+            %if (uav(i).speed == 10)
+            %    plot(uav(i).get_real_x(),uav(i).get_real_y(),'x')
+            %elseif (uav(i).speed ==20)
+            %    plot(uav(i).get_real_x(),uav(i).get_real_y(),'+')
+            %else
+            %    plot(uav(i).get_real_x(),uav(i).get_real_y(),'o')
+            
+            %end
         end
         cloudplot(cloud,t);
         old_msg = new_msg;
-        if spawn_new_uav
+        if spawn_new_uav && (kk-last_launch>25)
+            last_launch = kk+1;
             num_uavs = num_uavs+1;
             id_count = id_count+1;
             ang = rand*2*pi;

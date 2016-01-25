@@ -66,7 +66,7 @@ classdef UAVsim < handle
         end
     
         function [x,y,p,id,new_uav] = step(uav,dt,t,cloud,messages)
-            fprintf('id=%d state=%d\n',uav.id, uav.state);
+            
             uav.t_alive = uav.t_alive+dt;
             p = cloudsamp(cloud,uav.x,uav.y,t);
             
@@ -80,7 +80,7 @@ classdef UAVsim < handle
             y = uav.curr_y_est;
             id = uav.id;
             
-            
+            fprintf('id=%d state=%d return_state=%d\n',uav.id, uav.state, uav.return_state);
         end
     end
     

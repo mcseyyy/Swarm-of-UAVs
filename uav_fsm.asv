@@ -1,24 +1,53 @@
 function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
+    num_uavs = size(messages,1); %number of active UAVs (including self)
     new_uav = false;
     ang_change = 0;
     uav.curr_x_est = uav.get_x();
     uav.curr_y_est = uav.get_y();
+    %COLLISION Overriding
+    dist_x = [];
+    dist_y = [];
+    if num_uavs>1
+        for i=1:num_uavs
+            if (messages(i,4)==uav.id)
+                continue;
+            end
+            dist = pdist([messages(i,1),messages(i,2); uav.curr_x_est ,uav.curr_y_est],'euclidean');
+            if dist<80
+                dist_x = [dist_x,(uav.curr_x_est-messages(i,1))/dist];
+                disy_y = [dist_y,(uav.curr_y_est-messages(i,2))/dist];
+                uav.speed = 10;
+            end
+        end
+        if (size(dist_x)>0)
+            target_ang = atan2(sum(dist_x),sum(dist_y));
+            ang_change = target_ang-uav.ang_est;
+            uav.return_state = uav.state;
+            uav.state=-2;
+            fprintf('avoid %d\n',uav.id);
+        end
+        
+    end
+    
+    
     switch uav.state
         case -1,
             uav.speed = 20;
             dist = pdist([uav.x_target,uav.y_target; uav.curr_x_est ,uav.curr_y_est],'euclidean');
             
-            if pdist([uav.x_target,uav.y_target; uav.curr_x_est ,uav.curr_y_est],'euclidean')<50
+            if pdist([uav.x_target,uav.y_target; uav.curr_x_est ,uav.curr_y_est],'euclidean')<100
                 uav.state = uav.return_state;
                 if (uav.state==5)
                     return;
                 end
             end
+            if ((uav.return_state == 3 && p>0.4)
+                uav.state = uav.return state;
+            end
              
             target_ang = atan2(uav.x_target - uav.curr_x_est,  uav.y_target - uav.curr_y_est);
             ang_change = target_ang-uav.ang_est;
-        case 0,
-            
+        case 0,            
             if uav.round_no==3
                 uav.ang_est = atan2(uav.curr_x_est, uav.curr_y_est);
                 uav.state = 2;
@@ -71,7 +100,7 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
                 uav.state = 4;
             end
         case 4,
-            num_uavs = size(messages,1); %number of active UAVs (including self)
+            
             for i=1:num_uavs
                 if messages(i,3)>0.8
                     uav.hull_x = [uav.hull_x,messages(i,1)];
@@ -139,7 +168,12 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
             end
     end
     
-    if uav.t_alive>1700
+    if (uav.state==-2)
+        uav.state = uav.return_state;
+    end
+    
+    if uav.t_alive>1200
+        fprintf('%d - go to sleep',uav.id);
         uav.state = -1;
         uav.return_state = 5; %once it base switch to disabled state (5)
         uav.x_target = 0;
