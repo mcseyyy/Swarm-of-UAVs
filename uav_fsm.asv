@@ -26,7 +26,7 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
     dist_x = [];
     dist_y = [];
     
-    if num_uavs>1
+    if num_uavs>1 &&uav.t_alive > 4
         %calculate the distance between the current UAV and the others
         for i=1:num_uavs
             if (messages(i,4)==uav.id)
@@ -272,14 +272,15 @@ end
 
 % check if a new uav is needed
 function new_uav = need_new_uav(hull_x,hull_y,num_uavs)
-    %assume the coud is a circle and calculate the average distance between
-    %2 UAVs (assuming they're on the 
+    %assume the cloud is a circle and calculate the average distance between
+    % 2 consecutive UAVs (assuming they're on the circle at equal
+    % distances); if that distance is too big, ask for a new one
     new_uav = false;
     cloud_area = polyarea(hull_x,hull_y);
     radius = sqrt(cloud_area/pi);
     average_dist = (2*pi/num_uavs) * radius;
     
-    if average_dist>400
+    if average_dist>450
         new_uav = true;
     end
     

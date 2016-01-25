@@ -3,7 +3,7 @@ function sim_start
     % choose a scenario
     % load 'cloud1.mat'
     close all;
-    load 'cloud2.mat'
+    load 'cloud1.mat'
 
     % time and time step
     t = 0;
@@ -56,7 +56,15 @@ function sim_start
         
         for i=1:num_uavs
             text(uav(i).get_real_x()-14, uav(i).get_real_y()-5,sprintf('%d',uav(i).id));
-            plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),25);
+            if uav(i).t_alive>10
+                %I assumed that during take off, the UAV does not need to
+                %do collision avoidance (until it reaches the required
+                %height) so I do not plot a circle around it for the first
+                %10 seconds.
+                % this is useful in the case the cloud spreads over the
+                % base (0,0);
+                plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),25);
+            end
         end
         cloudplot(cloud,t);
         old_msg = new_msg;

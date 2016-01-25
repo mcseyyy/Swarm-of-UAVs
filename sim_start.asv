@@ -19,7 +19,7 @@ function sim_start
     num_uavs = 1; %number of active UAVs
     uav(num_uavs,1) = UAVsim; 
     ang = rand*2*pi;
-    uav(1) = UAVsim(0,0,ang,0,1);%x,y,ang,t,id
+    uav(1) = UAVsim(0,0,ang,1);%x,y,ang,id
     
     
     old_msg = zeros(num_uavs,5); %keeps the messages that have to be processed for next iterration
@@ -29,7 +29,7 @@ function sim_start
         new_msg = zeros(num_uavs,5); %create an empty matrix for the new messages
         t = t + dt;
         
-%        spawn_new_uav = false;
+        spawn_new_uav = false;
         i=1;
         while i<=num_uavs
             [x,y,p,id,new_uav] = uav(floor(i)).step(dt,t,cloud,old_msg);
@@ -56,7 +56,15 @@ function sim_start
         
         for i=1:num_uavs
             text(uav(i).get_real_x()-14, uav(i).get_real_y()-5,sprintf('%d',uav(i).id));
-            plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),25);
+            if uav(i).t_alive>10
+                %I assumed that during take off, the UAV does not need to
+                %do collision avoidance (until it reaches the required
+                %height) so I do not plot a circle around it for the first
+                %10 seconds.
+                % this is useful in the case the cloud spreads over the
+                % base (0,0);
+                plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),25);
+            end
         end
         cloudplot(cloud,t);
         old_msg = new_msg;
@@ -65,7 +73,7 @@ function sim_start
             num_uavs = num_uavs+1;
             id_count = id_count+1;
             ang = rand*2*pi;
-            uav = [uav;UAVsim(0,0,ang,0,id_count)];
+            uav = [uav;UAVsim(0,0,ang,id_count)];
         end
     end
 end
