@@ -6,8 +6,8 @@ function ang_change = uav_fsm(uav,p,dt,messages)
         case -1,
             uav.speed = 20;
             dist = pdist([uav.x_target,uav.y_target; uav.curr_x_est ,uav.curr_y_est],'euclidean');
-            fprintf('%d %f',uav.id,dist);
-            if pdist([uav.x_target,uav.y_target; uav.curr_x_est ,uav.curr_y_est],'euclidean')<100
+            
+            if pdist([uav.x_target,uav.y_target; uav.curr_x_est ,uav.curr_y_est],'euclidean')<50
                 uav.state = uav.return_state;
                 if (uav.state==5)
                     return;

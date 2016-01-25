@@ -40,9 +40,9 @@ function sim_start
                 %if uav returned to the base, remove it
                 
                 if i<num_uavs && i>1
-                    uav = [uav(1:i-1),uav(i+1:end)];
+                    uav = [uav(1:i-1);uav(i+1:end)];
                 elseif i<1
-                    uav = uav(2:end)
+                    uav = uav(2:end);
                 else
                     uav = uav(1:end-1);
                 end
