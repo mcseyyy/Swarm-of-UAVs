@@ -75,26 +75,28 @@ function ang_change = uav_fsm(uav,p,dt,messages)
                     uav.hull_y = uav.hull_y(hull_indexes);
                 end
             end
-            
-            if size(uav.hull_x)>50
+            size(uav.hull_x)
+            if size(uav.hull_x,2)>20
                 x_c = mean(uav.hull_x);
-                y_c = mean(uav.hull.y);
+                y_c = mean(uav.hull_y);
                 ang_c = zeros(num_uavs);
                 %calculate the angle between the center of the cloud and
                 %all the UAVs; angles should be between [0,2pi] and not
                 %between [-pi,pi]
-                for i=0;num_uavs
+                
+                for i=1:num_uavs
                     ang_c(messages(i,4)) = atan2(messages(i,1)-x_c, messages(i,2)-y_c);
                 end
+                fprintf('TAA DAA\n');
                 own_ang = ang_c(uav.id);
                 ang_c = sort(ang_c);
                 idx = find(ang_c==own_ang);
                 
-                if (idx==1) prev_ang = ang_c(num_uavs);
+                if (idx==1) prev_ang_diff = mod(own_ang-ang_c(num_uavs)+2*pi,2*pi);
                 else prev_ang_diff = mod(own_ang-ang_c(idx-1)+2*pi,2*pi);
                 end
                 
-                if (idx==num_uavs) next_ang=ang_c(1);
+                if (idx==num_uavs) next_ang_diff= mod(ang_c(1)-own_ang+2*pi,2*pi);
                 else next_ang_diff = mod(ang_c(idx+1)-own_ang+2*pi,2*pi);
                 end
                 
