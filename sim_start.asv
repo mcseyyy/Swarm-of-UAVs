@@ -33,30 +33,20 @@ function sim_start
         t = t + dt;
         i=1;
         while i<=num_uavs
-            
-            [x,y,p,id] = uav(floor(i)).step(dt,t,cloud,old_msg);
+            [x,y,p,id] = uav(i).step(dt,t,cloud,old_msg);
             new_msg(i,1:4) = [x,y,p,id];
             if uav(i).state == 5 
                 %if uav returned to the base, remove it
-                
-                if i<num_uavs && i>1
-                    uav = [uav(1:i-1),uav(i+1:end)];
-                elseif i<1
-                    uav = uav(2:end)
+                if i<num_uavs && 
+                    uav = [uav(1:i-1),uav(i+1:num_uavs)];
                 else
-                    uav = uav(1:end-1);
-                end
                     
                 i=i-1;
                 num_uavs = num_uavs-1;
             end
-            i=i+1;
         end
         
         %plot the UAVs and the cloud
-        if num_uavs<1
-            return;
-        end
         cla
         title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav(1).get_real_x,uav(1).get_real_y,uav(1).p))
         %plot(uav.get_real_x(),uav.get_real_y(),'o')
