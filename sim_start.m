@@ -13,8 +13,8 @@ function sim_start
     figure
     hold on % so each plot doesn't wipte the predecessor
 
-
-    num_uavs = 4;
+    id_count = 1;
+    num_uavs = 1;
     uav(num_uavs,1) = UAVsim; %x,y,ang,t,id
     ang_dist = 2*pi/num_uavs;
     for i=1:num_uavs
@@ -25,17 +25,23 @@ function sim_start
         
     
     
-    old_msg = zeros(num_uavs,4);
+    old_msg = zeros(num_uavs,5);
+    spawn_new_uav = false;
     % main simulation loop
     for kk=1:3600
-        new_msg = zeros(num_uavs,4);
+        new_msg = zeros(num_uavs,5);
         
         t = t + dt;
         i=1;
+        spawn_new_uav = false;
+        fprintf('num_uavs %d\n',num_uavs);
         while i<=num_uavs
             
-            [x,y,p,id] = uav(floor(i)).step(dt,t,cloud,old_msg);
-            new_msg(i,1:4) = [x,y,p,id];
+            [x,y,p,id,new_uav] = uav(floor(i)).step(dt,t,cloud,old_msg);
+            new_msg(i,1:5) = [x,y,p,id,new_uav];
+            if (new_uav)
+                spawn_new_uav = true;
+            end
             if uav(i).state == 5 
                 %if uav returned to the base, remove it
                 
@@ -52,6 +58,7 @@ function sim_start
             end
             i=i+1;
         end
+        
         
         %plot the UAVs and the cloud
         if num_uavs<1
@@ -72,7 +79,13 @@ function sim_start
         end
         cloudplot(cloud,t);
         old_msg = new_msg;
-        new_msg = [];
+        if spawn_new_uav
+            
+            num_uavs = num_uavs+1;
+            id_count = id_count+1;
+            ang = rand;
+            uav = [uav;UAVsim(0,0,ang,0,id_count)];
+        end
     end
 end
 

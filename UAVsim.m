@@ -65,12 +65,12 @@ classdef UAVsim < handle
             y=uav.y;
         end
     
-        function [x,y,p,id] = step(uav,dt,t,cloud,messages)
+        function [x,y,p,id,new_uav] = step(uav,dt,t,cloud,messages)
             
             uav.t_alive = uav.t_alive+dt;
             p = cloudsamp(cloud,uav.x,uav.y,t);
             
-            total_ang_change = uav_fsm(uav,p,dt,messages); 
+            [total_ang_change, new_uav]= uav_fsm(uav,p,dt,messages); 
             
             turn_speed = total_ang_change/uav.speed;
             [uav.x,uav.y,uav.ang] = update_location(uav.x, uav.y, uav.ang, uav.speed, turn_speed,dt);
@@ -79,6 +79,7 @@ classdef UAVsim < handle
             x = uav.curr_x_est;
             y = uav.curr_y_est;
             id = uav.id;
+            
             
         end
     end

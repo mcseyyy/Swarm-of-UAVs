@@ -1,4 +1,5 @@
-function ang_change = uav_fsm(uav,p,dt,messages)
+function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
+    new_uav = false;
     ang_change = 0;
     uav.curr_x_est = uav.get_x();
     uav.curr_y_est = uav.get_y();
@@ -92,6 +93,11 @@ function ang_change = uav_fsm(uav,p,dt,messages)
                         uav.hull_x = uav.hull_x(1,1:2:num_points);
                         uav.hull_y = uav.hull_y(1,1:2:num_points);
                     end
+                    
+                    if uav.id == min(messages(:,4))
+                        new_uav = need_new_uav(uav.hull_x,uav.hull_y,num_uavs);
+                    end
+                    
                 end
             end
             
@@ -133,7 +139,7 @@ function ang_change = uav_fsm(uav,p,dt,messages)
             end
     end
     
-    if uav.t_alive>300
+    if uav.t_alive>1700
         uav.state = -1;
         uav.return_state = 5; %once it base switch to disabled state (5)
         uav.x_target = 0;
@@ -181,4 +187,17 @@ function ang_change = ang_threshold(ang_change,speed,dt)
     elseif ang_change < -speed*dt*(pi/20)
         ang_change = -speed*(pi/20);
     end
+end
+
+function new_uav = need_new_uav(hull_x,hull_y,num_uavs)
+    
+    new_uav = false;
+    cloud_area = polyarea(hull_x,hull_y);
+    radius = sqrt(cloud_area/pi);
+    average_dist = (2*pi/num_uavs) * radius;
+    
+    if average_dist>300
+        new_uav = true;
+    end
+    
 end
