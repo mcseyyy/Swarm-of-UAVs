@@ -3,7 +3,7 @@ function sim_start
     % choose a scenario
     % load 'cloud1.mat'
     close all;
-    load 'cloud2.mat'
+    load 'cloud1.mat'
 
     % time and time step
     t = 0;
@@ -24,24 +24,30 @@ function sim_start
     end;
         
     
-    new_msg = zeros(num_uavs,3);
-    old_msg = zeros(num_uavs,3);
+    new_msg = zeros(num_uavs,4);
+    old_msg = zeros(num_uavs,4);
     % main simulation loop
     for kk=1:3600
         t = t + dt;
         for i=1:num_uavs
-            [x,y,p] = uav(i).step(dt,t,cloud,old_msg);
-            new_msg(i,1:3) = [x,y,p];
-            fprintf('--%d %d\n',uav(i).id,uav(i).state);
+            [x,y,p,id] = uav(i).step(dt,t,cloud,old_msg);
+            new_msg(i,1:4) = [x,y,p,id];
         end
-        fprintf('============\n');
+        
 
         %plot the UAVs and the cloud
         cla
-        title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav.get_real_x,uav.get_real_y,uav.p))
+        title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav(1).get_real_x,uav(1).get_real_y,uav(1).p))
         %plot(uav.get_real_x(),uav.get_real_y(),'o')
         for i=1:num_uavs
-            plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),30);
+            if (uav(i).speed == 10)
+                plot(uav(i).get_real_x(),uav(i).get_real_y(),'x')
+            elseif (uav(i).speed ==20)
+                plot(uav(i).get_real_x(),uav(i).get_real_y(),'+')
+            else
+                plot(uav(i).get_real_x(),uav(i).get_real_y(),'o')
+            %plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),30);
+            end
         end
         cloudplot(cloud,t);
         old_msg = new_msg;

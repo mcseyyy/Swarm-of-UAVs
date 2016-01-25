@@ -21,7 +21,7 @@ function ang_change = uav_fsm(uav,p,dt,messages)
         case 1,
             for i=1:size(messages,1)
                 if messages(i,3)>0.4
-                    uav.state = -1
+                    uav.state = -1;
                     uav.x_target = messages(i,1);
                     uav.y_target = messages(i,2);
                     uav.return_state = 3;
@@ -56,6 +56,7 @@ function ang_change = uav_fsm(uav,p,dt,messages)
                 uav.state = 3;
             end
         case 3,
+            uav.speed = 10;
             if p<0.4
                 uav.state = 1;
             elseif p<uav.p && p>0.9
@@ -63,6 +64,47 @@ function ang_change = uav_fsm(uav,p,dt,messages)
                 uav.state = 4;
             end
         case 4,
+            num_uavs = size(messages,1);
+            uav.speed = 15;
+            if (p>0.8)
+                uav.hull_x = [uav.hull_x,uav.curr_x_est];
+                uav.hull_y = [uav.hull_y,uav.curr_y_est];
+                if size(uav.hull_x)>50
+                    hull_indexes = convhull(uav.hull_x, uav.hull_y);
+                    uav.hull_x = uav.hull_x(hull_indexes);
+                    uav.hull_y = uav.hull_y(hull_indexes);
+                end
+            end
+            
+            if size(uav.hull_x)>50
+                x_c = mean(uav.hull_x);
+                y_c = mean(uav.hull.y);
+                ang_c = zeros(num_uavs);
+                %calculate the angle between the center of the cloud and
+                %all the UAVs; angles should be between [0,2pi] and not
+                %between [-pi,pi]
+                for i=0;num_uavs
+                    ang_c(messages(i,4)) = atan2(messages(i,1)-x_c, messages(i,2)-y_c);
+                end
+                own_ang = ang_c(uav.id);
+                ang_c = sort(ang_c);
+                idx = find(ang_c==own_ang);
+                
+                if (idx==1) prev_ang = ang_c(num_uavs);
+                else prev_ang_diff = mod(own_ang-ang_c(idx-1)+2*pi,2*pi);
+                end
+                
+                if (idx==num_uavs) next_ang=ang_c(1);
+                else next_ang_diff = mod(ang_c(idx+1)-own_ang+2*pi,2*pi);
+                end
+                
+                if prev_ang_diff<next_ang_diff
+                    uav.speed = 20;
+                elseif prev_ang_diff > next_ang_diff
+                    uav.speed = 10;
+                end 
+            end
+                
             if p<0.95 && p<uav.p
                 ang_change = pi/6;
             elseif p>1.2 && p>uav.p
@@ -75,7 +117,7 @@ function ang_change = uav_fsm(uav,p,dt,messages)
         
         
     %estimate the future location of the UAV
-    fprintf('+++++ state=%d id=%d\n',uav.state, uav.id);
+    
     [est_x,est_y,new_ang] = update_location(uav.curr_x_est, uav.curr_y_est, uav.ang_est, uav.speed, ang_change/uav.speed,dt);
     
     %if the future location is outside the map, 

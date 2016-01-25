@@ -2,6 +2,8 @@ classdef UAVsim < handle
     properties (SetAccess = public, GetAccess = public)
         %ang_thresh;
         %dist_thresh;
+        hull_x = [];
+        hull_y = [];
         return_state;
         id;
         speed=20;
@@ -62,7 +64,8 @@ classdef UAVsim < handle
             y=uav.y;
         end
     
-        function [x,y,p] = step(uav,dt,t,cloud,messages)
+        function [x,y,p,id] = step(uav,dt,t,cloud,messages)
+            fprintf('=====before step\n');
             p = cloudsamp(cloud,uav.x,uav.y,t);
             total_ang_change = uav_fsm(uav,p,dt,messages); 
             turn_speed = total_ang_change/uav.speed;
@@ -71,6 +74,8 @@ classdef UAVsim < handle
             uav.p = p;
             x = uav.curr_x_est;
             y = uav.curr_y_est;
+            id = uav.id;
+            fprintf('=====after step\n')
         end
     end
     
