@@ -65,7 +65,7 @@ classdef UAVsim < handle
         end
     
         function [x,y,p,id] = step(uav,dt,t,cloud,messages)
-            fprintf('=====before step\n');
+            
             p = cloudsamp(cloud,uav.x,uav.y,t);
             total_ang_change = uav_fsm(uav,p,dt,messages); 
             turn_speed = total_ang_change/uav.speed;
@@ -75,7 +75,7 @@ classdef UAVsim < handle
             x = uav.curr_x_est;
             y = uav.curr_y_est;
             id = uav.id;
-            fprintf('=====after step\n')
+            
         end
     end
     
