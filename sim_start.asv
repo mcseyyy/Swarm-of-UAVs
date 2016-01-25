@@ -24,17 +24,15 @@ function sim_start
     end;
         
     
-    new_msg = zeros(num_uavs,3);
-    old_msg = zeros(num_uavs,3);
+    new_msg = [];
+    old_msg = [];
     % main simulation loop
     for kk=1:3600
         t = t + dt;
         for i=1:num_uavs
-            [x,y,p] = uav(i).step(dt,t,cloud,old_msg);
-            new_msg(i,1:3) = [x,y,p];
-            fprintf('--%d %d\n',uav(i).id,uav(i).state);
+            new_msg(i) = uav(i).step(dt,t,cloud,old_msg);
+            new_m
         end
-        fprintf('============\n');
 
         %plot the UAVs and the cloud
         cla
@@ -44,8 +42,7 @@ function sim_start
             plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),30);
         end
         cloudplot(cloud,t);
-        old_msg = new_msg;
-        new_msg = [];
+        old_msg = new_msg
     end
 end
 

@@ -61,16 +61,18 @@ classdef UAVsim < handle
         function y = get_real_y(uav) %gor plotting
             y=uav.y;
         end
+        
+        
     
         function [x,y,p] = step(uav,dt,t,cloud,messages)
             p = cloudsamp(cloud,uav.x,uav.y,t);
-            total_ang_change = uav_fsm(uav,p,dt,messages); 
+            total_ang_change = uav_fsm(uav,p,dt); 
             turn_speed = total_ang_change/uav.speed;
             [uav.x,uav.y,uav.ang] = update_location(uav.x, uav.y, uav.ang, uav.speed, turn_speed,dt);
             uav.ang = mod(uav.ang+2*pi,2*pi);
             uav.p = p;
-            x = uav.curr_x_est;
-            y = uav.curr_y_est;
+            x=uav.curr_x_est;
+            y=uav.curr_y_est;
         end
     end
     
