@@ -25,7 +25,7 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
      
     dist_x = [];
     dist_y = [];
-    
+    %collision avoidance starts after 5 seconds
     if num_uavs>1 &&uav.t_alive > 5
         %calculate the distance between the current UAV and the others
         for i=1:num_uavs

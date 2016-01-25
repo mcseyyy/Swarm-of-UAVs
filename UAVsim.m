@@ -86,8 +86,15 @@ classdef UAVsim < handle
             x = uav.curr_x_est;
             y = uav.curr_y_est;
             id = uav.id;
+            if uav.t_alive < 5
+                %if the uav has been recently launched, do not send any
+                %messages; the way I am handling messages requires all UAVs
+                %to send a message so I filled it with garbage;
+                x = 9999;
+                y = 9999;
+                p = 0;
+            end
             
-            %fprintf('id=%d state=%d return_state=%d\n',uav.id, uav.state, uav.return_state);
         end
     end
     
