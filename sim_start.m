@@ -43,15 +43,16 @@ function sim_start
                 spawn_new_uav = true;
             end
             if uav(i).state == 5 
+                uav(i)=[];
                 %if uav returned to the base, remove it
                 
-                if i<num_uavs && i>1
-                    uav = [uav(1:i-1);uav(i+1:end)];
-                elseif i<1
-                    uav = uav(2:end);
-                else
-                    uav = uav(1:end-1);
-                end
+                %if i<num_uavs && i>1
+                %    uav = [uav(1:i-1);uav(i+1:end)];
+                %elseif i<1
+                %   uav = uav(2:end);
+                %else
+                %    uav = uav(1:end-1);
+                %end
                     
                 i=i-1;
                 num_uavs = num_uavs-1;
@@ -80,10 +81,9 @@ function sim_start
         cloudplot(cloud,t);
         old_msg = new_msg;
         if spawn_new_uav
-            
             num_uavs = num_uavs+1;
             id_count = id_count+1;
-            ang = rand;
+            ang = rand*2*pi;
             uav = [uav;UAVsim(0,0,ang,0,id_count)];
         end
     end

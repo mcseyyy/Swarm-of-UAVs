@@ -37,7 +37,7 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
             end
             
                     
-            if uav.state ==-1
+            if uav.state == -1
                 target_ang = atan2(uav.x_target - uav.curr_x_est,  uav.y_target - uav.curr_y_est);
                 ang_change = target_ang-uav.ang_est;
             elseif (abs(uav.curr_x_est)>900 || abs(uav.curr_y_est) > 900)
@@ -139,7 +139,8 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
             end
     end
     
-    if uav.t_alive>1700
+    if uav.t_alive>1200
+        fprintf('%d - go to sleep',uav.id);
         uav.state = -1;
         uav.return_state = 5; %once it base switch to disabled state (5)
         uav.x_target = 0;
