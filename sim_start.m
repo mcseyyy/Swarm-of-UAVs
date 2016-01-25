@@ -88,7 +88,9 @@ end
 
 
 function plot_circle(x,y,r)
-    ang = 0:0.01:2*pi;
+    %plots a circle at (x,y) corrdinates with radius r
+    %quality of the circle is not very good but it is decent enough
+    ang = 0:0.5:2*pi;
     xp = r*cos(ang);
     yp = r*sin(ang);
     plot(x+xp,y+yp);

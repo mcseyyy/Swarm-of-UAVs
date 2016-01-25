@@ -3,7 +3,7 @@ function sim_start
     % choose a scenario
     % load 'cloud1.mat'
     close all;
-    load 'cloud1.mat'
+    load 'cloud2.mat'
 
     % time and time step
     t = 0;
@@ -61,7 +61,8 @@ function sim_start
         title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav(1).get_real_x,uav(1).get_real_y,uav(1).p))
         %plot(uav.get_real_x(),uav.get_real_y(),'o')
         for i=1:num_uavs
-            text(uav(i).get_real_x(), uav(i).get_real_y(),sprintf('%d',uav(i).id));
+            text(uav(i).get_real_x()-14, uav(i).get_real_y()-5,sprintf('%d',uav(i).id));
+            plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),25);
             
             
             %if (uav(i).speed == 10)
@@ -70,12 +71,13 @@ function sim_start
             %    plot(uav(i).get_real_x(),uav(i).get_real_y(),'+')
             %else
             %    plot(uav(i).get_real_x(),uav(i).get_real_y(),'o')
-            %plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),30);
+            
             %end
         end
         cloudplot(cloud,t);
         old_msg = new_msg;
-        if spawn_new_uav
+        if spawn_new_uav && (kk-last_launch>25)
+            last_launch = kk+1;
             num_uavs = num_uavs+1;
             id_count = id_count+1;
             ang = rand*2*pi;
@@ -86,7 +88,9 @@ end
 
 
 function plot_circle(x,y,r)
-    ang = 0:0.01:2*pi;
+    %plots a circle at (x,y) corrdinates with radius r;
+    %quality of the circle is not very good but it is decent enough;
+    ang = 0:0.5:2*pi;
     xp = r*cos(ang);
     yp = r*sin(ang);
     plot(x+xp,y+yp);
