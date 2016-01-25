@@ -8,71 +8,55 @@ function sim_start
     % time and time step
     t = 0;
     dt = 1;
-    last_launch = 1;
+    last_launch = 1; %time when the last UAV was launched
 
     % open new figure window
     figure
     hold on % so each plot doesn't wipte the predecessor
-
-    id_count = 1;
-    num_uavs = 1;
-    uav(num_uavs,1) = UAVsim; %x,y,ang,t,id
-    ang_dist = 2*pi/num_uavs;
-    for i=1:num_uavs
-        ang = ang_dist/2+ang_dist*(i-1);
-        ang = normrnd(ang,ang_dist/2);
-        uav(i) = UAVsim(0,0,ang,0,i);
-    end;
-        
+    
+    %create initial UAVs
+    id_count = 1; %id for the next spawned UAV
+    num_uavs = 1; %number of active UAVs
+    uav(num_uavs,1) = UAVsim; 
+    ang = rand*2*pi;
+    uav(1) = UAVsim(0,0,ang,1);%x,y,ang,id
     
     
-    old_msg = zeros(num_uavs,5);
-    spawn_new_uav = false;
-    % main simulation loop
+    old_msg = zeros(num_uavs,5); %keeps the messages that have to be processed for next iterration
+    spawn_new_uav = false; %if this becomes true, launch a new uav
+    
     for kk=1:3600
-        new_msg = zeros(num_uavs,5);
-        
+        new_msg = zeros(num_uavs,5); %create an empty matrix for the new messages
         t = t + dt;
-        i=1;
-        spawn_new_uav = false;
         
+        spawn_new_uav = false;
+        i=1;
         while i<=num_uavs
-            
             [x,y,p,id,new_uav] = uav(floor(i)).step(dt,t,cloud,old_msg);
-            new_msg(i,1:5) = [x,y,p,id,new_uav];
+            new_msg(i,1:5) = [x,y,p,id,new_uav]; %get the message from the current UAV
             if (new_uav)
                 spawn_new_uav = true;
             end
-            if uav(i).state == 5 
-                uav(i)=[];
-                    
+            if uav(i).state == 5
+                %if UAV ran out of battery
+                uav(i)=[];%remove the current UAV
                 i=i-1;
                 num_uavs = num_uavs-1;
             end
             i=i+1;
         end
-        
-        
-        %plot the UAVs and the cloud
         if num_uavs<1
+            %sanity check
             return;
         end
+        
+        %plot the UAVs and the cloud
         cla
         title(sprintf('t=%.1f secs pos=(%.1f, %.1f)  Concentration=%.2f',t, uav(1).get_real_x,uav(1).get_real_y,uav(1).p))
-        %plot(uav.get_real_x(),uav.get_real_y(),'o')
+        
         for i=1:num_uavs
             text(uav(i).get_real_x()-14, uav(i).get_real_y()-5,sprintf('%d',uav(i).id));
             plot_circle(uav(i).get_real_x(),uav(i).get_real_y(),25);
-            
-            
-            %if (uav(i).speed == 10)
-            %    plot(uav(i).get_real_x(),uav(i).get_real_y(),'x')
-            %elseif (uav(i).speed ==20)
-            %    plot(uav(i).get_real_x(),uav(i).get_real_y(),'+')
-            %else
-            %    plot(uav(i).get_real_x(),uav(i).get_real_y(),'o')
-            
-            %end
         end
         cloudplot(cloud,t);
         old_msg = new_msg;
@@ -81,15 +65,15 @@ function sim_start
             num_uavs = num_uavs+1;
             id_count = id_count+1;
             ang = rand*2*pi;
-            uav = [uav;UAVsim(0,0,ang,0,id_count)];
+            uav = [uav;UAVsim(0,0,ang,id_count)];
         end
     end
 end
 
 
 function plot_circle(x,y,r)
-    %plots a circle at (x,y) corrdinates with radius r
-    %quality of the circle is not very good but it is decent enough
+    %plots a circle at (x,y) corrdinates with radius r;
+    %quality of the plotted circle is not very good but it is decent enough;
     ang = 0:0.5:2*pi;
     xp = r*cos(ang);
     yp = r*sin(ang);

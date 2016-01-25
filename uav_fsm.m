@@ -1,64 +1,91 @@
 function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
+    % ==STATES==
+    % -2 = avoid collision
+    % -1 = go to target
+    % +0 = initial state for callibrating the angle estimation 
+    % +1 = Looking for a cloud; go in spirals until find one or until it
+    %      receives a message with a location
+    % +2 = keep going straight until concentration>1
+    % +3 = keep going straight until concentration<0.9
+    % +4 = cloud following
     if uav.return_state == -1
+        
         uav.return_state = 1;
     end
     num_uavs = size(messages,1); %number of active UAVs (including self)
-    new_uav = false;
-    ang_change = 0;
+    new_uav = false; %assume there is no need for a uav
+    ang_change = 0; %this will store the total amount of change in the angle
+    
+    %get GPS location
     uav.curr_x_est = uav.get_x();
     uav.curr_y_est = uav.get_y();
-    %COLLISION Overriding
+    
+    %==COLLISION
+    %this overrides all the other states
+     
     dist_x = [];
     dist_y = [];
+    
     if num_uavs>1
+        %calculate the distance between the current UAV and the others
         for i=1:num_uavs
             if (messages(i,4)==uav.id)
                 continue;
             end
             dist = pdist([messages(i,1),messages(i,2); uav.curr_x_est ,uav.curr_y_est],'euclidean');
             if dist<100
+                %if avoidance is needed make it go in the opposite direction 
+                %by adding a repulsion force vector
+                
+                %repulsion force is inverse proportional to the distance
+                %between the UAVs
                 dist_x = [dist_x,(uav.curr_x_est-messages(i,1))/dist];
                 disy_y = [dist_y,(uav.curr_y_est-messages(i,2))/dist];
                 uav.speed = 10;
             end
         end
         if (size(dist_x)>0)
+            %find the angle of the total repulsion forces and make the UAV
+            % to go in the same direction
             target_ang = atan2(sum(dist_x),sum(dist_y));
             ang_change = target_ang-uav.ang_est;
             uav.return_state = uav.state;
             uav.state=-2;
-            fprintf('avoid %d\n',uav.id);
         end
         
     end
     
     
     switch uav.state
-        case -1,
+        case -1, %Go to Target; When target is reached switch to uav.return_state
             uav.speed = 20;
             dist = pdist([uav.x_target,uav.y_target; uav.curr_x_est ,uav.curr_y_est],'euclidean');
             
             if pdist([uav.x_target,uav.y_target; uav.curr_x_est ,uav.curr_y_est],'euclidean')<100
+                %if target was reached
                 uav.state = uav.return_state;
                 if (uav.state==5)
                     return;
                 end
             end
+            
             if ((uav.return_state == 3|| uav.return_state == 1) && p>0.4)
+                %if return_state==3/1 it means that the uav is still
+                %looking for a cloud so we do not actually need to get to 
+                %the target; reaching the cloud is good enoug
                 uav.state = uav.return_state;
             end
              
             target_ang = atan2(uav.x_target - uav.curr_x_est,  uav.y_target - uav.curr_y_est);
             ang_change = target_ang-uav.ang_est;
-        case 0,            
-            if uav.round_no==3
-                uav.ang_est = atan2(uav.curr_x_est, uav.curr_y_est);
-                uav.state = 2;
-            else
-                uav.round_no = uav.round_no+1;
+        case 0,
+            if uav.t_alive>3 %if it has been alive for more than 3 seconds, calculate the estimated angle
+                uav.ang_est = atan2(uav.curr_x_est, uav.curr_y_est); %assumed that it was launched at 0,0
+                uav.state = 1;
             end
         case 1,
             for i=1:size(messages,1)
+                %check if any of the other UAVs found the cloud
                 if messages(i,3)>0.4
                     uav.state = -1;
                     uav.x_target = messages(i,1);
@@ -67,13 +94,12 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
                     break;
                 end
             end
-            
                     
-            if uav.state == -1
+            if uav.state == -1 %if the uav has to go to the cloud
                 target_ang = atan2(uav.x_target - uav.curr_x_est,  uav.y_target - uav.curr_y_est);
                 ang_change = target_ang-uav.ang_est;
             elseif (abs(uav.curr_x_est)>900 || abs(uav.curr_y_est) > 900)
-                %if a boundary is reachedbefore finding the cloud,
+                %if a boundary is reached before finding the cloud,
                 %go back to (0,0) and start searching again
                 uav.state = -1;
                 uav.return_state = 1;
@@ -106,34 +132,40 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
             
             for i=1:num_uavs
                 if messages(i,3)>0.8
+                    %add the locations of other UAVs on the convex hull if
+                    % concentration>0.8
                     uav.hull_x = [uav.hull_x,messages(i,1)];
                     uav.hull_y = [uav.hull_y,messages(i,2)];
                 end
             end
             
-            uav.speed = 15;
+            uav.speed = 15; %default speed
             if (p>0.8) 
                 %add current location to the convex hull
                 uav.hull_x = [uav.hull_x,uav.curr_x_est];
                 uav.hull_y = [uav.hull_y,uav.curr_y_est];
-                if size(uav.hull_x,2)>30
+                if size(uav.hull_x,2)>30 %if there are enough points to compute the hull
                     hull_indexes = convhull(uav.hull_x, uav.hull_y,'simplify',true);
                     uav.hull_x = uav.hull_x(hull_indexes);
                     uav.hull_y = uav.hull_y(hull_indexes);
                     num_points = size(uav.hull_x,2);
                     if (num_points>100)
+                        %if there are too many points on the hull, drop the
+                        %ones at even indices
                         uav.hull_x = uav.hull_x(1,1:2:num_points);
                         uav.hull_y = uav.hull_y(1,1:2:num_points);
                     end
                     
                     if uav.id == min(messages(:,4))
+                        %only the uav with the minimum ID can ask for a new
+                        %UAV
                         new_uav = need_new_uav(uav.hull_x,uav.hull_y,num_uavs);
                     end
-                    
                 end
             end
             
-            if size(uav.hull_x,2)>20
+            if size(uav.hull_x,2)>15
+                %calculate the center of the cloud
                 x_c = mean(uav.hull_x);
                 y_c = mean(uav.hull_y);
                 ang_c = zeros(num_uavs);
@@ -142,6 +174,7 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
                 %between [-pi,pi]
                 
                 for i=1:num_uavs
+                    %calculate the angle between the center and all UAVs
                     ang_c(i) = atan2(messages(i,1)-x_c, messages(i,2)-y_c);
                 end
                 
@@ -149,6 +182,8 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
                 ang_c = sort(ang_c);
                 idx = find(ang_c==own_ang);
                 
+                %calculate the angle between the current uav and the
+                % next/prev UAV w.r.t. the center of the cloud
                 if (idx==1) prev_ang_diff = mod(own_ang-ang_c(num_uavs)+2*pi,2*pi);
                 else prev_ang_diff = mod(own_ang-ang_c(idx-1)+2*pi,2*pi);
                 end
@@ -157,40 +192,49 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
                 else next_ang_diff = mod(ang_c(idx+1)-own_ang+2*pi,2*pi);
                 end
                 
+                %speed up/slow down the current uav in order to make the
+                %angle differences equal
                 if prev_ang_diff<next_ang_diff
                     uav.speed = 20;
                 elseif prev_ang_diff > next_ang_diff
                     uav.speed = 10;
                 end 
             end
-                
+            
+            %if the concentration is too low turn right
+            %if the concentration is too high, turn left
             if p<0.95 && p<uav.p
                 ang_change = pi/6;
             elseif p>1.2 && p>uav.p
                 ang_change = -pi/10;
             end
+            %the turning angle to the rght is higher than the one to the
+            %left because it also has to compensate for the curvature of
+            %the cloud
     end
     
-    if (uav.state==-2)
+    if (uav.state == -2) 
+        %if a collision was detected before the switch/case, change the
+        %state back to the original one
         uav.state = uav.return_state;
     end
     
     if uav.t_alive>1720
-        fprintf('%d - go to sleep',uav.id);
+        %battery running low
         uav.state = -1;
-        uav.return_state = 5; %once it base switch to disabled state (5)
+        uav.return_state = 5; %once it reached the base switch to disabled state (5)
         uav.x_target = 0;
         uav.y_target = 0;
     end
-    ang_change = ang_threshold(ang_change, uav.speed,dt);
     
-        
+    ang_change = ang_threshold(ang_change, uav.speed,dt);
         
     %estimate the future location of the UAV
     
     [est_x,est_y,new_ang] = update_location(uav.curr_x_est, uav.curr_y_est, uav.ang_est, uav.speed, ang_change/uav.speed,dt);
     
-    %if the future location is outside the map, 
+    %if the future location is outside the map, turn arround in order to
+    %get parallel to one of the axis
     bound = 950;
     if est_y <- bound
         ang_change = 3*pi/2+pi/20-uav.ang_est;
@@ -211,7 +255,7 @@ function [ang_change, new_uav]= uav_fsm(uav,p,dt,messages)
 end
 
 function ang_change = ang_threshold(ang_change,speed,dt)
-    %make the smallest turn to achieve the required result
+    % -make the smallest turn to achieve the required result
     if (ang_change > pi)
         ang_change = ang_change-2*pi;
     elseif (ang_change < -pi)
@@ -226,14 +270,17 @@ function ang_change = ang_threshold(ang_change,speed,dt)
     end
 end
 
+% check if a new uav is needed
 function new_uav = need_new_uav(hull_x,hull_y,num_uavs)
-    
+    %assume the cloud is a circle and calculate the average distance between
+    % 2 consecutive UAVs (assuming they're on the circle at equal
+    % distances); if that distance is too big, ask for a new one
     new_uav = false;
     cloud_area = polyarea(hull_x,hull_y);
     radius = sqrt(cloud_area/pi);
     average_dist = (2*pi/num_uavs) * radius;
     
-    if average_dist>400
+    if average_dist>450
         new_uav = true;
     end
     

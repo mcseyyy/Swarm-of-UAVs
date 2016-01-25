@@ -1,6 +1,7 @@
-function [xx,yy,ang] = update_location(uav_x, uav_y, uav_ang, uav_speed, ang_change,dt)
+function [xx,yy,ang] = update_location(uav_x, uav_y, uav_ang, uav_speed, ang_speed,dt)
+    
     x = [uav_x;uav_y; uav_ang];
-    u = [uav_speed; ang_change];
+    u = [uav_speed; ang_speed];
             
     k1 = f_continuous(x,u);
     k2 = f_continuous(x+k1*dt/2,u);
