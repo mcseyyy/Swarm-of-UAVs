@@ -4,6 +4,8 @@ Simulation for behaviour of a swarm of UAVs for tracking a pollutant cloud.
 
 Initially one UAV flies in a spiral trying to find a cloud and once it finds it, it calls more UAVs to fly around the cloud and track the cloud's border corresponding to a pollutant concentration of 1.0. The goal is to have the UAVs uniformly spread around the cloud.
 
+Each UAV can fly for 30 minutes after which it needs to go back to the base (0,0) to recharge.
+
 ####sim-start.m
 This file performs the setup of the simulation and starts it.
 ####uav-fsm.m
