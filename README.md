@@ -1,4 +1,6 @@
 # Swarm of UAVs
+[![yt-video](https://cloud.githubusercontent.com/assets/9435724/13357897/8df83810-dca4-11e5-8fb0-018e99a5c139.png)](https://www.youtube.com/watch?v=qWS4iV0g2EE)
+
 ##Description
 Simulation for behaviour of a swarm of UAVs for tracking a pollutant cloud.
 
